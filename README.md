@@ -31,6 +31,19 @@ A high-performance Google Chrome Extension (Manifest V3) that automates keyword 
   - **Download .MD**: Saves `autocomplete_[platform]_[keyword].md`.
   - **Download .CSV**: Saves `autocomplete_[platform]_[keyword].csv`.
 - **In-Result Filtering**: Instant search bar to filter mined suggestions in real time.
+- **✨ Instant "Analyse with AI" Niche Intelligence**:
+  - One-click launch into your preferred AI chat service with all extracted autocomplete terms and a structured niche analysis prompt.
+  - **7 Supported AI Platforms**:
+    - 🤖 **ChatGPT** (`chatgpt.com`)
+    - 🎭 **Claude** (`claude.ai`)
+    - ✨ **Google Gemini** (`gemini.google.com`)
+    - 🔍 **Perplexity** (`perplexity.ai`)
+    - 🐋 **DeepSeek** (`chat.deepseek.com`)
+    - 💠 **Microsoft Copilot** (`copilot.microsoft.com`)
+    - ⚡ **Grok** (`grok.com`)
+  - **Comprehensive Prompt Directives**: Directs the AI to report on search intent, thematic sub-niche clusters, high-value long-tail opportunities, commercial/monetization potential, platform-tailored suggestions (Etsy product ideas, YouTube video concepts, Google topic clusters), and an action roadmap.
+  - **Automatic Clipboard Synchronization**: Copies the complete, un-truncated prompt and all suggestions to your clipboard so you can paste (`Cmd+V` / `Ctrl+V`) directly into any model.
+  - **"Copy Prompt" Utility**: Instant one-click button to copy the prompt without opening an external tab.
 
 ---
 
@@ -43,19 +56,21 @@ autocomplete-mining/
 ├── content/
 │   └── content.js           # Content script for typing simulation & DOM extraction
 ├── sidepanel/
-│   ├── sidepanel.html       # Side panel interface
+│   ├── sidepanel.html       # Side panel interface (including AI Niche Intelligence)
 │   ├── sidepanel.css        # Responsive dark slate design system (Vanilla CSS)
 │   └── sidepanel.js         # Side panel state management and event coordination
 ├── lib/
 │   ├── miner.js             # Reusable step-by-step mining orchestrator engine
-│   └── markdown.js          # Markdown, CSV, and plain-text export generators
+│   ├── markdown.js          # Markdown, CSV, and plain-text export generators
+│   └── ai.js                # AI service profiles, prompt generation & URL launcher
 ├── icons/                   # Custom generated icons (16px, 32px, 48px, 128px)
 │   ├── icon16.png
 │   ├── icon32.png
 │   ├── icon48.png
 │   └── icon128.png
 ├── tests/
-│   └── miner.test.mjs       # Unit test suite verifying logic, formatting, and engine
+│   ├── miner.test.mjs       # Mining engine, export formatters & integration tests
+│   └── ai.test.mjs          # AI prompt generation, service URLs & safety tests
 └── README.md
 ```
 
@@ -81,14 +96,18 @@ autocomplete-mining/
 5. (Optional) Adjust **Mining Options** in the accordion (speed delay, prefix/suffix, 0–9 digits).
 6. Click **Mine Now** (or press Enter).
 7. Watch the extension type into the search bar, cycle through the alphabet, and harvest suggestions live.
-8. Once finished, click **Copy Markdown to Clipboard** to grab your clean, formatted report!
+8. Once finished:
+   - Click **Analyse with AI** to immediately open a new chat (ChatGPT, Claude, Gemini, Perplexity, DeepSeek, Copilot, Grok) with all extracted terms and a prompt requesting a full niche report!
+   - Use the dropdown to choose your preferred AI service or click **Copy Prompt** to copy the prompt to your clipboard.
+   - Or click **Copy Markdown to Clipboard** to grab your clean, formatted report!
 
 ---
 
 ## 🧪 Testing
 
-Run the automated test suite locally:
+Run the automated test suites locally:
 
 ```bash
 node tests/miner.test.mjs
+node tests/ai.test.mjs
 ```

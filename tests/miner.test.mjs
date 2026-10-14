@@ -278,4 +278,28 @@ console.log("=== Running Autocomplete Mining Test Suite ===");
   console.log("✓ Etsy extraction accurately extracts suggestions and discards shop search and trending items.");
 }
 
-console.log("\n🎉 All 7 tests passed successfully!");
+// 8. Test AI Niche Intelligence Prompt & Service integration
+{
+  console.log("\n[Test 8] AI Niche Intelligence integration");
+  const { AIServiceManager } = await import("../lib/ai.js");
+  const services = AIServiceManager.getServices();
+  assert.ok(services.length >= 6, "AI services available");
+
+  const prompt = AIServiceManager.generateNichePrompt({
+    keyword: "dog tags",
+    platform: "etsy",
+    allUnique: ["dog tags custom", "dog tags engraved"]
+  });
+  assert.ok(prompt.includes("dog tags"), "Prompt includes keyword");
+  assert.ok(prompt.includes("Etsy"), "Prompt includes platform");
+
+  const payload = AIServiceManager.buildServicePayload("chatgpt", {
+    keyword: "dog tags",
+    platform: "etsy",
+    allUnique: ["dog tags custom", "dog tags engraved"]
+  });
+  assert.ok(payload.url.startsWith("https://chatgpt.com/?q="), "ChatGPT payload URL generated");
+  console.log("✓ AI Niche Intelligence integration validated successfully.");
+}
+
+console.log("\n🎉 All 8 tests passed successfully!");

@@ -4,6 +4,7 @@
 
 import { MinerEngine } from "../lib/miner.js";
 import { MarkdownExporter } from "../lib/markdown.js";
+import { AI_SERVICES, AIServiceManager } from "../lib/ai.js";
 
 // DOM Elements
 const platformBadge = document.getElementById("platform-badge");
@@ -41,6 +42,15 @@ const resultsFilter = document.getElementById("results-filter");
 const tabBtns = document.querySelectorAll(".tab-btn");
 const tabPanels = document.querySelectorAll(".tab-panel");
 
+// AI Intelligence Elements
+const btnAnalyseAi = document.getElementById("btn-analyse-ai");
+const btnAnalyseAiLabel = document.getElementById("btn-analyse-ai-label");
+const btnAiMenuToggle = document.getElementById("btn-ai-menu-toggle");
+const aiServiceSelect = document.getElementById("ai-service-select");
+const aiServicesDropdown = document.getElementById("ai-services-dropdown");
+const aiDropdownList = document.getElementById("ai-dropdown-list");
+const btnCopyAiPrompt = document.getElementById("btn-copy-ai-prompt");
+
 const markdownOutput = document.getElementById("markdown-output");
 const groupedContainer = document.getElementById("grouped-container");
 const plainListContainer = document.getElementById("plain-list-container");
@@ -59,11 +69,13 @@ let currentPlatform = "unsupported";
 let currentMiner = null;
 let lastMinedData = null;
 let lastGeneratedMarkdown = "";
+let selectedAiService = "chatgpt";
 
 /**
  * Initialize application
  */
 async function init() {
+  renderAiServicesMenu();
   setupEventListeners();
   loadSavedSettings();
   await refreshActiveTab();
@@ -150,6 +162,29 @@ function setupEventListeners() {
 
   // Real-time results filter
   resultsFilter.addEventListener("input", filterResultsView);
+
+  // AI Intelligence Actions
+  btnAnalyseAi.addEventListener("click", () => {
+    launchAiAnalysis(selectedAiService);
+  });
+
+  btnAiMenuToggle.addEventListener("click", (e) => {
+    e.stopPropagation();
+    toggleAiMenu();
+  });
+
+  aiServiceSelect.addEventListener("change", () => {
+    selectAiService(aiServiceSelect.value);
+  });
+
+  btnCopyAiPrompt.addEventListener("click", copyAiPromptToClipboard);
+
+  // Close AI dropdown on outside click
+  document.addEventListener("click", (e) => {
+    if (aiServicesDropdown && !aiServicesDropdown.contains(e.target) && !btnAiMenuToggle.contains(e.target)) {
+      toggleAiMenu(false);
+    }
+  });
 
   // Export buttons
   btnCopyMarkdown.addEventListener("click", copyMarkdownToClipboard);
@@ -402,6 +437,12 @@ function displayResults(data, mode) {
   // 3. Render Plain List View
   renderPlainListView(data.allUnique);
 
+  // 4. Update AI action button label for active service
+  const activeService = AIServiceManager.getService(selectedAiService);
+  if (btnAnalyseAiLabel) {
+    btnAnalyseAiLabel.textContent = `Analyse with ${activeService.name}`;
+  }
+
   // Auto-scroll to results
   resultsSection.scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -580,6 +621,150 @@ function downloadBlob(content, filename, mimeType) {
 }
 
 /**
+ * Render the dropdown list of available AI services
+ */
+function renderAiServicesMenu() {
+  if (!aiDropdownList) return;
+  aiDropdownList.innerHTML = "";
+  AI_SERVICES.forEach((service) => {
+    const item = document.createElement("button");
+    item.type = "button";
+    item.className = `ai-service-option-item ${service.id === selectedAiService ? "selected" : ""}`;
+    item.dataset.service = service.id;
+    item.innerHTML = `
+      <div class="ai-service-item-main">
+        <span class="ai-service-item-icon">${service.icon}</span>
+        <span>${escapeHtml(service.name)}</span>
+      </div>
+      <span class="ai-service-item-provider">${escapeHtml(service.provider)}</span>
+    `;
+    item.addEventListener("click", () => {
+      selectAiService(service.id);
+      toggleAiMenu(false);
+      launchAiAnalysis(service.id);
+    });
+    aiDropdownList.appendChild(item);
+  });
+}
+
+/**
+ * Select active AI service
+ */
+function selectAiService(serviceId) {
+  selectedAiService = serviceId || "chatgpt";
+  const service = AIServiceManager.getService(selectedAiService);
+
+  if (aiServiceSelect && aiServiceSelect.value !== selectedAiService) {
+    aiServiceSelect.value = selectedAiService;
+  }
+
+  if (btnAnalyseAiLabel) {
+    btnAnalyseAiLabel.textContent = `Analyse with ${service.name}`;
+  }
+
+  if (aiDropdownList) {
+    aiDropdownList.querySelectorAll(".ai-service-option-item").forEach((el) => {
+      el.classList.toggle("selected", el.dataset.service === selectedAiService);
+    });
+  }
+
+  saveSettings();
+}
+
+/**
+ * Toggle visibility of AI services dropdown menu
+ */
+function toggleAiMenu(show) {
+  if (!aiServicesDropdown) return;
+  const isHidden = aiServicesDropdown.classList.contains("hidden");
+  const willShow = typeof show === "boolean" ? show : isHidden;
+  aiServicesDropdown.classList.toggle("hidden", !willShow);
+  if (btnAiMenuToggle) {
+    btnAiMenuToggle.setAttribute("aria-expanded", String(willShow));
+  }
+}
+
+/**
+ * Launch AI service in a new chat tab with prefilled prompt & clipboard fallback
+ */
+async function launchAiAnalysis(serviceId) {
+  if (!lastMinedData || !lastMinedData.keyword) {
+    showToast("Please mine keywords first to analyze.", "warning");
+    return;
+  }
+
+  const targetId = serviceId || selectedAiService || "chatgpt";
+  const payload = AIServiceManager.buildServicePayload(targetId, {
+    keyword: lastMinedData.keyword,
+    platform: lastMinedData.platform,
+    resultsByLetter: lastMinedData.resultsByLetter,
+    allUnique: lastMinedData.allUnique,
+    mode: lastMinedData.mode || miningModeSelect.value
+  });
+
+  // 1. Copy complete, un-truncated prompt to clipboard
+  try {
+    await navigator.clipboard.writeText(payload.fullPrompt);
+  } catch (err) {
+    const textarea = document.createElement("textarea");
+    textarea.value = payload.fullPrompt;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand("copy");
+    document.body.removeChild(textarea);
+  }
+
+  // 2. Open new chat in a new tab
+  if (chrome.tabs && chrome.tabs.create) {
+    chrome.tabs.create({ url: payload.url });
+  } else {
+    chrome.runtime.sendMessage({ type: "OPEN_TAB", url: payload.url });
+  }
+
+  // 3. User feedback toast
+  let notice = `Opened ${payload.service.name}!`;
+  if (payload.service.id === "gemini") {
+    notice = "Opened Gemini! Prompt in clipboard (Cmd+V to paste).";
+  } else if (payload.isTruncatedUrl) {
+    notice = `Opened ${payload.service.name}! Full prompt in clipboard.`;
+  } else {
+    notice = `Opened ${payload.service.name} with pre-filled prompt!`;
+  }
+  showToast(notice, "success");
+}
+
+/**
+ * Copy full AI niche analysis prompt to clipboard only
+ */
+async function copyAiPromptToClipboard() {
+  if (!lastMinedData || !lastMinedData.keyword) {
+    showToast("No mined data available to create prompt.", "warning");
+    return;
+  }
+
+  const prompt = AIServiceManager.generateNichePrompt({
+    keyword: lastMinedData.keyword,
+    platform: lastMinedData.platform,
+    resultsByLetter: lastMinedData.resultsByLetter,
+    allUnique: lastMinedData.allUnique,
+    mode: lastMinedData.mode || miningModeSelect.value
+  });
+
+  try {
+    await navigator.clipboard.writeText(prompt);
+    showToast("✓ Niche analysis prompt copied to clipboard!");
+  } catch (err) {
+    const textarea = document.createElement("textarea");
+    textarea.value = prompt;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand("copy");
+    document.body.removeChild(textarea);
+    showToast("✓ Niche analysis prompt copied to clipboard!");
+  }
+}
+
+/**
  * Display toast notification
  */
 let toastTimeout = null;
@@ -608,7 +793,8 @@ function saveSettings() {
     method: miningMethodSelect.value,
     delay: delaySlider.value,
     includeNumbers: checkNumbers.checked,
-    clearSearchbar: checkClearSearchbar.checked
+    clearSearchbar: checkClearSearchbar.checked,
+    selectedAiService
   };
   chrome.storage.local.set({ autocompleteMiningSettings: settings }).catch(() => {});
 }
@@ -628,6 +814,11 @@ function loadSavedSettings() {
       }
       if (typeof s.includeNumbers === "boolean") checkNumbers.checked = s.includeNumbers;
       if (typeof s.clearSearchbar === "boolean") checkClearSearchbar.checked = s.clearSearchbar;
+      if (s.selectedAiService) {
+        selectAiService(s.selectedAiService);
+      } else {
+        selectAiService("chatgpt");
+      }
     }
   }).catch(() => {});
 }

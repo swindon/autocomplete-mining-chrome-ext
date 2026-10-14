@@ -86,6 +86,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
   }
 
+  if (message.type === "OPEN_TAB") {
+    const { url } = message;
+    if (url) {
+      chrome.tabs.create({ url }).then((tab) => {
+        sendResponse({ success: true, tabId: tab.id });
+      }).catch((err) => {
+        sendResponse({ success: false, error: err.message });
+      });
+      return true;
+    }
+  }
+
   if (message.type === "ENSURE_CONTENT_SCRIPT") {
     const { tabId } = message;
     if (!tabId) {

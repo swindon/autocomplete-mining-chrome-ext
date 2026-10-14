@@ -172,6 +172,66 @@
           <span id="results-badge" class="results-badge">0 terms</span>
         </div>
 
+        <!-- AI Niche Intelligence Card -->
+        <div class="ai-analysis-card">
+          <div class="ai-analysis-header">
+            <div class="ai-header-left">
+              <div class="ai-icon-badge">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <path d="M12 2l2.4 7.2L21.6 12l-7.2 2.4L12 21.6l-2.4-7.2L2.4 12l7.2-2.4L12 2z"></path>
+                </svg>
+              </div>
+              <div>
+                <span class="ai-card-title">AI Niche Intelligence</span>
+                <span class="ai-card-subtitle">Extract trends, clusters & opportunities</span>
+              </div>
+            </div>
+            <button type="button" id="btn-copy-ai-prompt" class="btn-copy-prompt" title="Copy full niche analysis prompt to clipboard">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              <span>Copy Prompt</span>
+            </button>
+          </div>
+
+          <div class="ai-action-group">
+            <div class="ai-split-btn">
+              <button type="button" id="btn-analyse-ai" class="btn-ai-primary" title="Launch new AI chat with extracted niche data">
+                <svg class="ai-sparkle-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                </svg>
+                <span id="btn-analyse-ai-label">Analyse with AI</span>
+              </button>
+              <button type="button" id="btn-ai-menu-toggle" class="btn-ai-toggle" title="Select AI Service" aria-haspopup="true" aria-expanded="false">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>
+            </div>
+
+            <div class="ai-select-wrapper">
+              <select id="ai-service-select" class="ai-service-select" title="Select AI Service">
+                <option value="chatgpt" selected>🤖 ChatGPT</option>
+                <option value="claude">🎭 Claude</option>
+                <option value="gemini">✨ Google Gemini</option>
+                <option value="perplexity">🔍 Perplexity</option>
+                <option value="deepseek">🐋 DeepSeek</option>
+                <option value="copilot">💠 Copilot</option>
+                <option value="grok">⚡ Grok</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Floating Dropdown Menu for AI Services -->
+          <div id="ai-services-dropdown" class="ai-services-dropdown hidden">
+            <div class="ai-dropdown-header">Choose AI Service to Launch:</div>
+            <div class="ai-dropdown-list" id="ai-dropdown-list">
+              <!-- Dynamically populated from AI_SERVICES -->
+            </div>
+          </div>
+        </div>
+
         <div class="results-views-nav">
           <button type="button" class="tab-btn active" data-tab="markdown">Markdown</button>
           <button type="button" class="tab-btn" data-tab="grouped">Grouped A–Z</button>
