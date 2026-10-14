@@ -1,0 +1,25 @@
+# Git
+.git/
+
+# Playwright & Browser MCP Artifacts
+.playwright-mcp/
+test-results/
+playwright-report/
+blob-report/
+
+# Dependencies & Build
+node_modules/
+dist/
+build/
+out/
+*.crx
+*.pem
+*.zip
+
+# Logs & Diagnostics
+*.log
+logs/
+
+# Coverage
+coverage/
+.nyc_output/

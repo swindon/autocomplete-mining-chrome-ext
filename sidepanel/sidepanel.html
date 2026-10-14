@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Autocomplete Mining</title>
+  <link rel="stylesheet" href="sidepanel.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="logo-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            <path d="M11 8v6"></path>
+            <path d="M8 11h6"></path>
+          </svg>
+        </div>
+        <div>
+          <h1 class="brand-title">Autocomplete Mining</h1>
+          <span class="brand-tag">Keyword Alphabet Miner</span>
+        </div>
+      </div>
+      <div id="platform-badge" class="platform-badge platform-unknown" title="Detected Platform">
+        <span class="platform-dot"></span>
+        <span id="platform-name">Detecting...</span>
+      </div>
+    </header>
+
+    <!-- Platform Guidance Banner (shown when tab is not Google/Etsy/YouTube) -->
+    <section id="platform-helper-banner" class="helper-banner hidden">
+      <div class="helper-content">
+        <p class="helper-text">You are not currently on a supported search page. Select a platform to open or mine directly:</p>
+        <div class="quick-nav-buttons">
+          <button type="button" class="btn-quick-nav btn-google" data-platform="google" data-url="https://www.google.com">
+            <span class="icon">G</span> Google
+          </button>
+          <button type="button" class="btn-quick-nav btn-etsy" data-platform="etsy" data-url="https://www.etsy.com">
+            <span class="icon">E</span> Etsy
+          </button>
+          <button type="button" class="btn-quick-nav btn-youtube" data-platform="youtube" data-url="https://www.youtube.com">
+            <span class="icon">▶</span> YouTube
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Mining Configuration Card -->
+    <section class="card config-card">
+      <div class="input-group">
+        <label for="keyword-input" class="input-label">Seed Keyword or Phrase</label>
+        <div class="input-wrapper">
+          <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input 
+            type="text" 
+            id="keyword-input" 
+            placeholder="e.g. leather wallet, vintage camera, gift ideas..." 
+            autocomplete="off" 
+            spellcheck="false"
+          >
+          <button type="button" id="btn-clear-keyword" class="btn-clear-text hidden" title="Clear">✕</button>
+        </div>
+      </div>
+
+      <!-- Advanced Options Accordion -->
+      <details class="options-accordion" id="options-accordion">
+        <summary class="accordion-summary">
+          <span>Mining Options</span>
+          <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </summary>
+        <div class="accordion-body">
+          <div class="option-row">
+            <label class="option-label" for="mining-mode">Pattern:</label>
+            <select id="mining-mode" class="select-control">
+              <option value="suffix" selected>Suffix: [Keyword] + [a-z]</option>
+              <option value="prefix">Prefix: [a-z] + [Keyword]</option>
+            </select>
+          </div>
+
+          <div class="option-row">
+            <label class="option-label" for="mining-method">Method:</label>
+            <select id="mining-method" class="select-control">
+              <option value="hybrid" selected>Hybrid (Searchbar + Auto-Fallback)</option>
+              <option value="dom">Interactive Searchbar Only</option>
+              <option value="api">Direct Background Fetch</option>
+            </select>
+          </div>
+
+          <div class="option-row">
+            <label class="option-label" for="delay-slider">Speed / Delay: <span id="delay-val">600ms</span></label>
+            <input type="range" id="delay-slider" min="300" max="1500" step="50" value="600" class="slider-control">
+          </div>
+
+          <div class="option-checkboxes">
+            <label class="checkbox-label">
+              <input type="checkbox" id="check-numbers">
+              <span>Include 0–9 Digits</span>
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" id="check-clear-searchbar" checked>
+              <span>Clear searchbar on finish</span>
+            </label>
+          </div>
+        </div>
+      </details>
+
+      <!-- Main Action Buttons -->
+      <div class="actions-group">
+        <button type="button" id="btn-mine" class="btn-primary">
+          <svg class="btn-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+          </svg>
+          <span id="btn-mine-text">Mine Now</span>
+        </button>
+
+        <div id="running-controls" class="running-controls hidden">
+          <button type="button" id="btn-pause" class="btn-secondary" title="Pause / Resume">
+            <span id="btn-pause-text">Pause</span>
+          </button>
+          <button type="button" id="btn-stop" class="btn-danger" title="Stop Mining">
+            Stop
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Progress & Live Status Section -->
+    <section id="progress-section" class="card progress-card hidden">
+      <div class="progress-header">
+        <span id="progress-status-text" class="status-text">Preparing queries...</span>
+        <span id="progress-percent-text" class="percent-text">0%</span>
+      </div>
+
+      <div class="progress-bar-container">
+        <div id="progress-bar" class="progress-bar-fill" style="width: 0%;"></div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-box">
+          <span class="stat-number" id="stat-unique-count">0</span>
+          <span class="stat-label">Unique Suggestions</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-number" id="stat-step-count">0 / 27</span>
+          <span class="stat-label">Letters Mined</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-number" id="stat-current-query">-</span>
+          <span class="stat-label">Current Query</span>
+        </div>
+      </div>
+
+      <!-- Alphabet Chips Grid -->
+      <div class="alphabet-grid" id="alphabet-grid">
+        <!-- Dynamically populated: Base, A, B, C... -->
+      </div>
+    </section>
+
+    <!-- Results Section -->
+    <section id="results-section" class="card results-card hidden">
+      <div class="results-header">
+        <div class="results-title-group">
+          <h2 class="section-title">Mined Results</h2>
+          <span id="results-badge" class="results-badge">0 terms</span>
+        </div>
+
+        <div class="results-views-nav">
+          <button type="button" class="tab-btn active" data-tab="markdown">Markdown</button>
+          <button type="button" class="tab-btn" data-tab="grouped">Grouped A–Z</button>
+          <button type="button" class="tab-btn" data-tab="list">Plain List</button>
+        </div>
+      </div>
+
+      <!-- Search / Filter within results -->
+      <div class="filter-wrapper">
+        <input type="text" id="results-filter" placeholder="Filter suggestions in results..." class="filter-input">
+      </div>
+
+      <!-- View 1: Markdown Preview & Raw Code -->
+      <div id="tab-content-markdown" class="tab-panel active">
+        <div class="markdown-toolbar">
+          <button type="button" id="btn-copy-markdown" class="btn-action-primary">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            <span>Copy Markdown to Clipboard</span>
+          </button>
+          <button type="button" id="btn-download-md" class="btn-action-secondary" title="Download .md file">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <span>Download .MD</span>
+          </button>
+        </div>
+        <pre class="markdown-preview"><code id="markdown-output"></code></pre>
+      </div>
+
+      <!-- View 2: Grouped by Letter -->
+      <div id="tab-content-grouped" class="tab-panel">
+        <div id="grouped-container" class="grouped-container">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- View 3: Plain List -->
+      <div id="tab-content-list" class="tab-panel">
+        <div class="list-toolbar">
+          <button type="button" id="btn-copy-plain" class="btn-action-secondary">
+            Copy All Plain Keywords
+          </button>
+          <button type="button" id="btn-download-csv" class="btn-action-secondary">
+            Download CSV
+          </button>
+        </div>
+        <ol id="plain-list-container" class="plain-list">
+          <!-- Populated by JS -->
+        </ol>
+      </div>
+    </section>
+
+    <!-- Toast Notification Overlay -->
+    <div id="toast" class="toast hidden">
+      <span id="toast-message">Copied to clipboard!</span>
+    </div>
+  </div>
+
+  <script type="module" src="sidepanel.js"></script>
+</body>
+</html>

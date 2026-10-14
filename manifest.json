@@ -1,0 +1,64 @@
+{
+  "manifest_version": 3,
+  "name": "Autocomplete Mining",
+  "version": "1.0.0",
+  "description": "Mine keyword autocomplete suggestions A-Z across Google, Etsy, and YouTube with instant Markdown export.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "permissions": [
+    "sidePanel",
+    "activeTab",
+    "tabs",
+    "scripting",
+    "storage",
+    "clipboardWrite"
+  ],
+  "host_permissions": [
+    "*://*.google.com/*",
+    "*://*.google.co.uk/*",
+    "*://*.google.com.au/*",
+    "*://*.google.ca/*",
+    "*://*.google.de/*",
+    "*://*.google.fr/*",
+    "*://*.google.co.jp/*",
+    "*://*.etsy.com/*",
+    "*://*.youtube.com/*",
+    "https://suggestqueries.google.com/*"
+  ],
+  "side_panel": {
+    "default_path": "sidepanel/sidepanel.html"
+  },
+  "action": {
+    "default_title": "Open Autocomplete Mining",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.google.com/*",
+        "*://*.google.co.uk/*",
+        "*://*.google.com.au/*",
+        "*://*.google.ca/*",
+        "*://*.google.de/*",
+        "*://*.google.fr/*",
+        "*://*.google.co.jp/*",
+        "*://*.etsy.com/*",
+        "*://*.youtube.com/*"
+      ],
+      "js": ["content/content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
