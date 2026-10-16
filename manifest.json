@@ -37,7 +37,18 @@
     "*://*.amazon.es/*",
     "*://*.amazon.it/*",
     "https://suggestqueries.google.com/*",
-    "https://completion.amazon.com/*"
+    "https://completion.amazon.com/*",
+    "*://chatgpt.com/*",
+    "*://*.chatgpt.com/*",
+    "*://claude.ai/*",
+    "*://*.claude.ai/*",
+    "*://gemini.google.com/*",
+    "*://*.perplexity.ai/*",
+    "*://chat.deepseek.com/*",
+    "*://*.deepseek.com/*",
+    "*://copilot.microsoft.com/*",
+    "*://grok.com/*",
+    "*://*.grok.com/*"
   ],
   "side_panel": {
     "default_path": "sidepanel/sidepanel.html"

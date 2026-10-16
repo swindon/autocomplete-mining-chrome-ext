@@ -747,19 +747,24 @@ async function launchAiAnalysis(serviceId) {
     document.body.removeChild(textarea);
   }
 
-  // 2. Open new chat in a new tab
-  if (chrome.tabs && chrome.tabs.create) {
+  // 2. Open new chat in a new tab & auto-paste prompt directly into chat input if URL length exceeded or query param unsupported
+  if (chrome.runtime && chrome.runtime.sendMessage) {
+    chrome.runtime.sendMessage({
+      type: "OPEN_AI_TAB",
+      url: payload.url,
+      prompt: payload.fullPrompt,
+      serviceId: payload.service.id,
+      needsInjection: Boolean(payload.needsInjection),
+      selectors: payload.service.selectors || []
+    });
+  } else if (chrome.tabs && chrome.tabs.create) {
     chrome.tabs.create({ url: payload.url });
-  } else {
-    chrome.runtime.sendMessage({ type: "OPEN_TAB", url: payload.url });
   }
 
   // 3. User feedback toast
   let notice = `Opened ${payload.service.name}!`;
-  if (payload.service.id === "gemini") {
-    notice = "Opened Gemini! Prompt in clipboard (Cmd+V to paste).";
-  } else if (payload.isTruncatedUrl) {
-    notice = `Opened ${payload.service.name}! Full prompt in clipboard.`;
+  if (payload.needsInjection) {
+    notice = `Opened ${payload.service.name}! Pasting prompt into chat input (also copied to clipboard)...`;
   } else {
     notice = `Opened ${payload.service.name} with pre-filled prompt!`;
   }

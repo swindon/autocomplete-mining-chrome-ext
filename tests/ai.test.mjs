@@ -23,6 +23,7 @@ console.log("=== Running AI Niche Analysis Test Suite ===");
     assert.ok(s.provider, `Service ${s.id} has provider`);
     assert.ok(s.baseUrl, `Service ${s.id} has baseUrl`);
     assert.ok(typeof s.supportsQueryParam === "boolean", `Service ${s.id} has boolean supportsQueryParam`);
+    assert.ok(Array.isArray(s.selectors) && s.selectors.length > 0, `Service ${s.id} has DOM input selectors`);
   }
   console.log("✓ All AI services correctly configured.");
 }
@@ -98,23 +99,28 @@ console.log("=== Running AI Niche Analysis Test Suite ===");
   assert.ok(chatgptPayload.url.startsWith("https://chatgpt.com/?q="), "ChatGPT URL has query param");
   assert.ok(chatgptPayload.url.includes(encodeURIComponent("woodworking gifts")), "ChatGPT URL contains keyword");
   assert.strictEqual(chatgptPayload.isTruncatedUrl, false, "Small dataset is not truncated");
+  assert.strictEqual(chatgptPayload.needsInjection, false, "Small dataset does not need injection");
 
   // Claude
   const claudePayload = AIServiceManager.buildServicePayload("claude", sampleData);
   assert.ok(claudePayload.url.startsWith("https://claude.ai/new?q="), "Claude URL has query param");
+  assert.strictEqual(claudePayload.needsInjection, false, "Claude small dataset does not need injection");
 
-  // Gemini (no query param natively, URL is base and full prompt is in fullPrompt for clipboard)
+  // Gemini (no query param natively, URL is base and full prompt is injected/copied)
   const geminiPayload = AIServiceManager.buildServicePayload("gemini", sampleData);
   assert.strictEqual(geminiPayload.url, "https://gemini.google.com/app", "Gemini URL is clean app URL");
-  assert.ok(geminiPayload.fullPrompt.length > 100, "Gemini has fullPrompt ready for clipboard");
+  assert.ok(geminiPayload.fullPrompt.length > 100, "Gemini has fullPrompt ready for injection/clipboard");
+  assert.strictEqual(geminiPayload.needsInjection, true, "Gemini flagged for injection since query param unsupported");
 
   // Perplexity
   const perplexityPayload = AIServiceManager.buildServicePayload("perplexity", sampleData);
   assert.ok(perplexityPayload.url.startsWith("https://www.perplexity.ai/search?q="), "Perplexity URL has query param");
+  assert.strictEqual(perplexityPayload.needsInjection, false, "Perplexity does not need injection for small dataset");
 
   // DeepSeek
   const deepseekPayload = AIServiceManager.buildServicePayload("deepseek", sampleData);
   assert.ok(deepseekPayload.url.startsWith("https://chat.deepseek.com/?q="), "DeepSeek URL has query param");
+  assert.strictEqual(deepseekPayload.needsInjection, false, "DeepSeek does not need injection for small dataset");
 
   console.log("✓ URL payloads generated accurately for all services.");
 }
@@ -140,8 +146,9 @@ console.log("=== Running AI Niche Analysis Test Suite ===");
   const payload = AIServiceManager.buildServicePayload("chatgpt", largeData);
   assert.ok(payload.url.length <= payload.service.maxUrlLength, `URL length (${payload.url.length}) is safely bounded under maxUrlLength (${payload.service.maxUrlLength})`);
   assert.strictEqual(payload.isTruncatedUrl, true, "Flagged as truncated URL to prevent HTTP 414 error");
+  assert.strictEqual(payload.needsInjection, true, "Flagged for direct chat input injection when URL length exceeded");
   assert.ok(payload.fullPrompt.includes("woodworking gift idea number 199"), "Full prompt still contains complete dataset for clipboard");
-  console.log("✓ Large datasets safely bound URL length while preserving full prompt for clipboard.");
+  console.log("✓ Large datasets safely bound URL length while preserving full prompt for clipboard and auto-injection.");
 }
 
 console.log("\n🎉 All 5 AI tests passed successfully!");
