@@ -83,7 +83,7 @@ autocomplete-mining/
 2. Navigate to `chrome://extensions/` in the address bar.
 3. Enable **Developer mode** using the toggle switch in the top-right corner.
 4. Click **Load unpacked** in the top-left toolbar.
-5. Select the `autocomplete-mining` directory (`/Users/scott/Documents/Chrome/autocomplete-mining`).
+5. Select the `autocomplete-mining` directory.
 6. The **Autocomplete Mining** icon will now appear in your Chrome toolbar.
 
 ---
@@ -100,7 +100,7 @@ autocomplete-mining/
 8. Once finished:
    - Click **Analyse with AI** to immediately open a new chat (ChatGPT, Claude, Gemini, Perplexity, DeepSeek, Copilot, Grok) with all extracted terms and a prompt requesting a full niche report!
    - Use the dropdown to choose your preferred AI service or click **Copy Prompt** to copy the prompt to your clipboard.
-   - Or click **Copy Markdown to Clipboard** to grab your clean, formatted report!
+   - Or click **Copy to Clipboard** to grab your clean, formatted report!
 
 ---
 
