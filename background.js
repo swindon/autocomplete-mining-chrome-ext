@@ -13,8 +13,7 @@ chrome.runtime.onInstalled.addListener(() => {
 
 /**
  * Determine supported platform from URL
- * @param {string} url
- * @returns {"google"|"etsy"|"youtube"|"unsupported"}
+ * @returns {"google"|"etsy"|"youtube"|"amazon"|"unsupported"}
  */
 function identifyPlatform(url) {
   if (!url) return "unsupported";
@@ -24,6 +23,7 @@ function identifyPlatform(url) {
     if (host.includes("google.")) return "google";
     if (host.includes("etsy.com")) return "etsy";
     if (host.includes("youtube.com")) return "youtube";
+    if (host.includes("amazon.")) return "amazon";
   } catch (e) {
     // invalid URL (e.g. chrome:// or about:blank)
   }
@@ -158,7 +158,16 @@ async function fetchDirectSuggestions(platform, query) {
     if (!res.ok) throw new Error(`YouTube API returned status ${res.status}`);
     const data = await res.json();
     if (Array.isArray(data) && Array.isArray(data[1])) {
-      return data[1].map(item => String(item).trim()).filter(Boolean);
+      return data[1].map(item => {
+        let text = String(item).trim();
+        const ellipsisRegex = /^\s*(?:\.{3,}|…)\s*/;
+        if (ellipsisRegex.test(text)) {
+          const remainder = text.replace(ellipsisRegex, "").trim();
+          const cleanQuery = (query || "").trim();
+          return cleanQuery ? (remainder ? `${cleanQuery} ${remainder}` : cleanQuery) : remainder;
+        }
+        return text;
+      }).filter(Boolean);
     }
     return [];
   }
@@ -184,6 +193,25 @@ async function fetchDirectSuggestions(platform, query) {
       }
     } catch (e) {
       console.warn("Etsy fetchDirectSuggestions error:", e);
+    }
+    return [];
+  }
+
+  if (platform === "amazon") {
+    const url = `https://completion.amazon.com/api/2017/suggestions?mid=ATVPDKIKX0DER&alias=aps&prefix=${q}`;
+    try {
+      const res = await fetch(url);
+      if (res.ok) {
+        const json = await res.json();
+        if (json && Array.isArray(json.suggestions)) {
+          return json.suggestions.map(item => {
+            if (typeof item === "string") return item.trim();
+            return (item.value || "").trim();
+          }).filter(Boolean);
+        }
+      }
+    } catch (e) {
+      console.warn("Amazon fetchDirectSuggestions error:", e);
     }
     return [];
   }

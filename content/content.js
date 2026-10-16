@@ -21,6 +21,7 @@
     if (host.includes("google.")) return "google";
     if (host.includes("etsy.com")) return "etsy";
     if (host.includes("youtube.com")) return "youtube";
+    if (host.includes("amazon.")) return "amazon";
     return "unsupported";
   }
 
@@ -92,6 +93,31 @@
         'recent searches', 'clear recent searches', 'trending now', 'trending searches',
         'find shop names', 'find shop names containing', 'see all results', 'in this shop',
         'all categories'
+      ]
+    },
+    amazon: {
+      inputSelectors: [
+        '#twotabsearchtextbox',
+        'input[name="field-keywords"]',
+        'input#nav-bb-search',
+        '#nav-search-keywords',
+        'input.nav-input[type="text"]',
+        'input[aria-label="Search Amazon"]',
+        'input[aria-label="Search Amazon.com"]',
+        'input[placeholder*="Search Amazon"]'
+      ],
+      suggestionSelectors: [
+        '.s-suggestion-container .s-suggestion',
+        '.s-suggestion',
+        'div[data-keyword]',
+        'div.s-suggestion-ellipsis-direction',
+        '#nav-flyout-searchAjax .s-suggestion',
+        '#nav-flyout-iss .s-suggestion',
+        '.autocomplete-results-container div[role="button"]',
+        '[role="listbox"] [role="option"]'
+      ],
+      ignoreTexts: [
+        'explore more items', 'in all departments', 'search instead for', 'trending searches', 'delete history'
       ]
     }
   };
@@ -189,6 +215,22 @@
   }
 
   /**
+   * Clean leading ellipses from suggestions (e.g. YouTube returning '... app' -> replaced with '<query> app')
+   */
+  function cleanSuggestionText(text, query) {
+    if (!text || typeof text !== "string") return "";
+    const trimmed = text.trim();
+    const ellipsisRegex = /^\s*(?:\.{3,}|…)\s*/;
+    if (ellipsisRegex.test(trimmed)) {
+      const remainder = trimmed.replace(ellipsisRegex, "").trim();
+      const cleanQuery = (query || "").trim();
+      if (!cleanQuery) return remainder;
+      return remainder ? `${cleanQuery} ${remainder}` : cleanQuery;
+    }
+    return trimmed;
+  }
+
+  /**
    * Extract suggestion texts from DOM
    */
   function extractSuggestionsFromDOM(platform, query = '') {
@@ -219,8 +261,30 @@
           }
 
           // Extract complete text (concatenating all sibling spans/strong tags properly)
-          const text = getCleanElementText(el);
+          let text = getCleanElementText(el);
+
+          // On Amazon: check data-keyword or aria-label attribute if available
+          if (platform === 'amazon') {
+            const kw = el.getAttribute('data-keyword') || el.getAttribute('aria-label');
+            if (kw && kw.trim().length >= 2) {
+              text = kw.trim();
+            }
+          }
+
           if (!text || text.length < 2) return;
+
+          // On YouTube: check if aria-label provides a full suggestion if text has leading ellipsis
+          if (platform === 'youtube' && /^\s*(?:\.{3,}|…)/.test(text)) {
+            const ariaLabel = el.getAttribute('aria-label');
+            if (ariaLabel && !/^\s*(?:\.{3,}|…)/.test(ariaLabel)) {
+              text = ariaLabel.trim();
+            }
+          }
+
+          // If suggestion starts with ellipsis '...' or '…', replace that with the searched query
+          if (platform === 'youtube' || /^\s*(?:\.{3,}|…)/.test(text)) {
+            text = cleanSuggestionText(text, query);
+          }
 
           const lower = text.toLowerCase();
 
@@ -277,7 +341,7 @@
         if (res.ok) {
           const json = await res.json();
           if (Array.isArray(json) && Array.isArray(json[1])) {
-            return json[1].map(s => String(s).trim()).filter(Boolean);
+            return json[1].map(s => cleanSuggestionText(String(s).trim(), query)).filter(Boolean);
           }
         }
       } catch (e) {}
@@ -291,6 +355,19 @@
           const json = await res.json();
           const list = json.results || json.suggestions || [];
           return list.map(item => (typeof item === "string" ? item : item.query || item.display_name || "")).filter(Boolean);
+        }
+      } catch (e) {}
+    } else if (platform === "amazon") {
+      try {
+        const res = await fetch(`https://completion.amazon.com/api/2017/suggestions?mid=ATVPDKIKX0DER&alias=aps&prefix=${q}`);
+        if (res.ok) {
+          const json = await res.json();
+          if (json && Array.isArray(json.suggestions)) {
+            return json.suggestions.map(s => {
+              if (typeof s === "string") return s.trim();
+              return (s.value || "").trim();
+            }).filter(Boolean);
+          }
         }
       } catch (e) {}
     }

@@ -2,7 +2,7 @@
  * Autocomplete Mining - Side Panel Script
  */
 
-import { MinerEngine } from "../lib/miner.js";
+import { MinerEngine, cleanSuggestion } from "../lib/miner.js";
 import { MarkdownExporter } from "../lib/markdown.js";
 import { AI_SERVICES, AIServiceManager } from "../lib/ai.js";
 
@@ -229,6 +229,10 @@ function updatePlatformUI(platform, url) {
     platformBadge.classList.add("platform-google");
     platformName.textContent = "Google";
     platformBadge.title = `Active on Google (${url || ""})`;
+  } else if (currentPlatform === "amazon") {
+    platformBadge.classList.add("platform-amazon");
+    platformName.textContent = "Amazon";
+    platformBadge.title = `Active on Amazon (${url || ""})`;
   } else if (currentPlatform === "etsy") {
     platformBadge.classList.add("platform-etsy");
     platformName.textContent = "Etsy";
@@ -240,7 +244,7 @@ function updatePlatformUI(platform, url) {
   } else {
     platformBadge.classList.add("platform-unknown");
     platformName.textContent = "Other Site";
-    platformBadge.title = "Current page is not Google, Etsy, or YouTube";
+    platformBadge.title = "Current page is not Google, Amazon, Etsy, or YouTube";
     helperBanner.classList.remove("hidden");
   }
 }
@@ -310,7 +314,7 @@ async function startMining() {
   // If user is not on a supported platform, but method is not direct API, ask or auto-switch to direct fetch
   if (targetPlatform === "unsupported") {
     if (method === "dom") {
-      showToast("Navigate to Google, Etsy, or YouTube to use searchbar mining.", "warning");
+      showToast("Navigate to Google, Amazon, Etsy, or YouTube to use searchbar mining.", "warning");
       helperBanner.classList.remove("hidden");
       return;
     }
@@ -417,6 +421,35 @@ function setMiningRunningUI(isRunning) {
  * Render results in all views (Markdown, Grouped, Plain List)
  */
 function displayResults(data, mode) {
+  // Ensure any suggestions starting with '...' or '…' are replaced with the searched query
+  if (data && data.resultsByLetter) {
+    const isYouTube = data.platform === "youtube";
+    const cleanedResults = {};
+    const allUniqueCleaned = new Set();
+
+    for (const [letter, items] of Object.entries(data.resultsByLetter)) {
+      let stepQuery = data.keyword || "";
+      if (letter !== "base") {
+        stepQuery = mode === "prefix" ? `${letter} ${data.keyword}` : `${data.keyword} ${letter}`;
+      }
+
+      cleanedResults[letter] = (items || []).map(item => {
+        if (typeof item !== "string") return "";
+        let text = item.trim();
+        if (isYouTube || /^\s*(?:\.{3,}|…)/.test(text)) {
+          text = cleanSuggestion(text, stepQuery);
+        }
+        return text;
+      }).filter(Boolean);
+
+      cleanedResults[letter].forEach(s => allUniqueCleaned.add(s));
+    }
+
+    data.resultsByLetter = cleanedResults;
+    data.allUnique = Array.from(allUniqueCleaned);
+    data.totalUnique = data.allUnique.length;
+  }
+
   lastMinedData = data;
   resultsSection.classList.remove("hidden");
   resultsBadge.textContent = `${data.allUnique.length} unique terms`;
@@ -440,7 +473,7 @@ function displayResults(data, mode) {
   // 4. Update AI action button label for active service
   const activeService = AIServiceManager.getService(selectedAiService);
   if (btnAnalyseAiLabel) {
-    btnAnalyseAiLabel.textContent = `Analyse with ${activeService.name}`;
+    // btnAnalyseAiLabel.textContent = `Analyse with ${activeService.name}`;
   }
 
   // Auto-scroll to results
@@ -659,7 +692,7 @@ function selectAiService(serviceId) {
   }
 
   if (btnAnalyseAiLabel) {
-    btnAnalyseAiLabel.textContent = `Analyse with ${service.name}`;
+    // btnAnalyseAiLabel.textContent = `Analyse with ${service.name}`;
   }
 
   if (aiDropdownList) {

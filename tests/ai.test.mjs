@@ -62,9 +62,14 @@ console.log("=== Running AI Niche Analysis Test Suite ===");
   console.log("✓ Niche prompt includes all extracted details and reporting directives.");
 }
 
-// 3. Test platform-specific advice for YouTube and Google
+// 3. Test platform-specific advice for Amazon, YouTube, and Google
 {
   console.log("\n[Test 3] Platform-specific advice variations");
+  const amazonAdvice = AIServiceManager.getPlatformSpecificAdvice("amazon");
+  assert.ok(amazonAdvice.includes("Product & Merchandising Opportunities"), "Amazon includes product/merchandising advice");
+  assert.ok(amazonAdvice.includes("Amazon SEO & Listing Optimization"), "Amazon includes SEO/backend search terms advice");
+  assert.ok(amazonAdvice.includes("PPC & Advertising Targets"), "Amazon includes PPC targets advice");
+
   const youtubeAdvice = AIServiceManager.getPlatformSpecificAdvice("youtube");
   assert.ok(youtubeAdvice.includes("Video Ideas"), "YouTube includes video ideas");
   assert.ok(youtubeAdvice.includes("Click-Worthy Titles & Thumbnails"), "YouTube includes title/thumbnail advice");
@@ -72,7 +77,7 @@ console.log("=== Running AI Niche Analysis Test Suite ===");
   const googleAdvice = AIServiceManager.getPlatformSpecificAdvice("google");
   assert.ok(googleAdvice.includes("Topic Clusters"), "Google includes topic clusters");
   assert.ok(googleAdvice.includes("Search Intent Mapping"), "Google includes search intent");
-  console.log("✓ Platform-specific advice differentiates Etsy, YouTube, and Google.");
+  console.log("✓ Platform-specific advice differentiates Amazon, Etsy, YouTube, and Google.");
 }
 
 // 4. Test URL payload creation for various services

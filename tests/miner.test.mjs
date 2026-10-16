@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { MarkdownExporter } from "../lib/markdown.js";
-import { MinerEngine } from "../lib/miner.js";
+import { MinerEngine, cleanSuggestion } from "../lib/miner.js";
 
 console.log("=== Running Autocomplete Mining Test Suite ===");
 
@@ -302,4 +302,202 @@ console.log("=== Running Autocomplete Mining Test Suite ===");
   console.log("✓ AI Niche Intelligence integration validated successfully.");
 }
 
-console.log("\n🎉 All 8 tests passed successfully!");
+// 9. Test cleanSuggestion utility for YouTube leading ellipsis replacement
+{
+  console.log("\n[Test 9] cleanSuggestion utility for leading ellipses ('...' and '…')");
+
+  // Replaces leading '...' with query + space
+  assert.strictEqual(
+    cleanSuggestion("... app", "vintage camera a"),
+    "vintage camera a app",
+    "Replaces leading '...' with query"
+  );
+
+  // Replaces leading unicode ellipsis '…'
+  assert.strictEqual(
+    cleanSuggestion("… app", "vintage camera a"),
+    "vintage camera a app",
+    "Replaces leading unicode ellipsis '…' with query"
+  );
+
+  // Replaces leading '...' without space after dots
+  assert.strictEqual(
+    cleanSuggestion("...app", "vintage camera a"),
+    "vintage camera a app",
+    "Handles no space after '...'"
+  );
+
+  // Handles multiple spaces around ellipsis
+  assert.strictEqual(
+    cleanSuggestion("  ...   app for android  ", "vintage camera a"),
+    "vintage camera a app for android",
+    "Handles whitespace around '...'"
+  );
+
+  // Handles four dots
+  assert.strictEqual(
+    cleanSuggestion(".... app", "vintage camera a"),
+    "vintage camera a app",
+    "Handles four dots"
+  );
+
+  // Leaves non-ellipsis suggestions unchanged
+  assert.strictEqual(
+    cleanSuggestion("vintage camera app", "vintage camera a"),
+    "vintage camera app",
+    "Leaves normal suggestions unchanged"
+  );
+
+  // Handles ellipsis with empty query
+  assert.strictEqual(
+    cleanSuggestion("... app", ""),
+    "app",
+    "Handles empty query"
+  );
+
+  // Handles ellipsis alone with query
+  assert.strictEqual(
+    cleanSuggestion("...", "vintage camera"),
+    "vintage camera",
+    "Handles ellipsis alone"
+  );
+
+  // Handles non-string input safely
+  assert.strictEqual(
+    cleanSuggestion(null, "vintage camera"),
+    "",
+    "Handles null input safely"
+  );
+
+  console.log("✓ cleanSuggestion correctly normalizes all ellipsis formats.");
+}
+
+// 10. Test YouTube leading ellipsis replacement during MinerEngine execution
+{
+  console.log("\n[Test 10] YouTube leading ellipsis replacement in MinerEngine");
+
+  let completedSummary = null;
+
+  const engine = new MinerEngine({
+    keyword: "vintage camera",
+    platform: "youtube",
+    delayMs: 1,
+    onComplete: (summary) => {
+      completedSummary = summary;
+    }
+  });
+
+  // Mock executeStep returning YouTube-style '...' suggestions
+  engine.executeStep = async (step) => {
+    if (step.letter === "base") {
+      return ["... review", "vintage camera 35mm"];
+    }
+    if (step.letter === "a") {
+      return ["... app", "… aesthetic", "...amazon"];
+    }
+    return [];
+  };
+
+  engine.buildSteps = () => [
+    { letter: "base", query: "vintage camera" },
+    { letter: "a", query: "vintage camera a" }
+  ];
+
+  await engine.start();
+
+  assert.ok(completedSummary, "Engine completed successfully");
+  const baseResults = completedSummary.resultsByLetter.base;
+  const aResults = completedSummary.resultsByLetter.a;
+
+  // Base results: '... review' -> 'vintage camera review'
+  assert.ok(baseResults.includes("vintage camera review"), "Base query replaced leading ellipsis");
+  assert.ok(!baseResults.some(s => s.startsWith("...")), "No base results start with '...'");
+
+  // A results: '... app' -> 'vintage camera a app', '… aesthetic' -> 'vintage camera a aesthetic'
+  assert.ok(aResults.includes("vintage camera a app"), "Replaced '... app' with 'vintage camera a app'");
+  assert.ok(aResults.includes("vintage camera a aesthetic"), "Replaced '… aesthetic' with 'vintage camera a aesthetic'");
+  assert.ok(aResults.includes("vintage camera a amazon"), "Replaced '...amazon' with 'vintage camera a amazon'");
+  assert.ok(!aResults.some(s => s.startsWith("...") || s.startsWith("…")), "No letter A results start with ellipsis");
+
+  // allUnique
+  assert.ok(!completedSummary.allUnique.some(s => s.startsWith("...") || s.startsWith("…")), "allUnique contains no leading ellipses");
+  assert.ok(completedSummary.allUnique.includes("vintage camera a app"), "allUnique contains normalized suggestion");
+
+  console.log("✓ MinerEngine seamlessly replaces leading ellipses on YouTube with the query.");
+}
+
+// 11. Test Amazon platform support and suggestion parsing
+{
+  console.log("\n[Test 11] Amazon platform support & suggestion parsing");
+
+  // Simulated Amazon completion API response parser
+  const parseAmazonApiResponse = (data) => {
+    if (data && Array.isArray(data.suggestions)) {
+      return data.suggestions.map(s => {
+        if (typeof s === "string") return s.trim();
+        return (s.value || "").trim();
+      }).filter(Boolean);
+    }
+    return [];
+  };
+
+  const sampleApiResponse = {
+    alias: "aps",
+    prefix: "laptop s",
+    suggestions: [
+      { suggType: "KeywordSuggestion", type: "KEYWORD", value: "laptop stand" },
+      { suggType: "KeywordSuggestion", type: "KEYWORD", value: "laptop screen extender" },
+      { suggType: "KeywordSuggestion", type: "KEYWORD", value: "laptop sleeve" }
+    ]
+  };
+
+  const parsed = parseAmazonApiResponse(sampleApiResponse);
+  assert.deepStrictEqual(parsed, ["laptop stand", "laptop screen extender", "laptop sleeve"], "Parsed Amazon suggestions match expected");
+
+  // MinerEngine execution with platform: "amazon"
+  let completedSummary = null;
+  const engine = new MinerEngine({
+    keyword: "wireless earbuds",
+    platform: "amazon",
+    delayMs: 1,
+    onComplete: (summary) => {
+      completedSummary = summary;
+    }
+  });
+
+  engine.executeStep = async (step) => {
+    if (step.letter === "base") {
+      return ["wireless earbuds bluetooth", "wireless earbuds with microphone"];
+    }
+    if (step.letter === "a") {
+      return ["wireless earbuds anc", "wireless earbuds apple"];
+    }
+    return [];
+  };
+
+  engine.buildSteps = () => [
+    { letter: "base", query: "wireless earbuds" },
+    { letter: "a", query: "wireless earbuds a" }
+  ];
+
+  await engine.start();
+
+  assert.ok(completedSummary, "Engine completed for Amazon platform");
+  assert.strictEqual(completedSummary.platform, "amazon", "Platform is amazon");
+  assert.strictEqual(completedSummary.totalUnique, 4, "Total unique count is 4");
+
+  // Markdown formatting for Amazon
+  const md = MarkdownExporter.generateMarkdown({
+    keyword: "wireless earbuds",
+    platform: "amazon",
+    resultsByLetter: completedSummary.resultsByLetter,
+    allUnique: completedSummary.allUnique
+  });
+
+  assert.ok(md.includes("**Platform** | Amazon"), "Markdown contains Amazon platform label");
+  assert.ok(md.includes("wireless earbuds bluetooth"), "Markdown contains extracted suggestions");
+
+  console.log("✓ Amazon platform mining, suggestion parsing, and Markdown export verified.");
+}
+
+console.log("\n🎉 All 11 tests passed successfully!");

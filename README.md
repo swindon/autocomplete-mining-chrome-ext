@@ -1,6 +1,6 @@
 # Autocomplete Mining ⛏️
 
-A high-performance Google Chrome Extension (Manifest V3) that automates keyword autocomplete mining across **Google**, **Etsy**, and **YouTube**, systematically querying from A to Z directly in the search bar and returning full, organized results formatted in Markdown with one-click clipboard copying.
+A high-performance Google Chrome Extension (Manifest V3) that automates keyword autocomplete mining across **Google**, **Amazon**, **Etsy**, and **YouTube**, systematically querying from A to Z directly in the search bar and returning full, organized results formatted in Markdown with one-click clipboard copying.
 
 ---
 
@@ -10,6 +10,7 @@ A high-performance Google Chrome Extension (Manifest V3) that automates keyword 
 - **Real-Time Searchbar Simulation**: Types the base keyword plus each letter of the alphabet (`a` through `z`) directly into the site's search input, triggering live suggestions on screen.
 - **Multi-Platform Support**:
   - 🌐 **Google Search** (`google.com`, regional domains)
+  - 📦 **Amazon** (`amazon.com`, regional domains)
   - 🛍️ **Etsy** (`etsy.com`)
   - 📺 **YouTube** (`youtube.com`)
 - **Dual / Hybrid Mining Engine**:
@@ -41,7 +42,7 @@ A high-performance Google Chrome Extension (Manifest V3) that automates keyword 
     - 🐋 **DeepSeek** (`chat.deepseek.com`)
     - 💠 **Microsoft Copilot** (`copilot.microsoft.com`)
     - ⚡ **Grok** (`grok.com`)
-  - **Comprehensive Prompt Directives**: Directs the AI to report on search intent, thematic sub-niche clusters, high-value long-tail opportunities, commercial/monetization potential, platform-tailored suggestions (Etsy product ideas, YouTube video concepts, Google topic clusters), and an action roadmap.
+  - **Comprehensive Prompt Directives**: Directs the AI to report on search intent, thematic sub-niche clusters, high-value long-tail opportunities, commercial/monetization potential, platform-tailored suggestions (Amazon product & PPC angles, Etsy product ideas, YouTube video concepts, Google topic clusters), and an action roadmap.
   - **Automatic Clipboard Synchronization**: Copies the complete, un-truncated prompt and all suggestions to your clipboard so you can paste (`Cmd+V` / `Ctrl+V`) directly into any model.
   - **"Copy Prompt" Utility**: Instant one-click button to copy the prompt without opening an external tab.
 
@@ -89,9 +90,9 @@ autocomplete-mining/
 
 ## 💡 How to Use
 
-1. Navigate to **Google**, **Etsy**, or **YouTube**.
+1. Navigate to **Google**, **Amazon**, **Etsy**, or **YouTube**.
 2. Click the **Autocomplete Mining** icon in your toolbar (or click the Side Panel icon in Chrome and choose Autocomplete Mining).
-3. The side panel will automatically detect the active site (showing a green, orange, or red badge).
+3. The side panel will automatically detect the active site (showing an active badge).
 4. Enter your seed keyword or phrase (e.g., `leather wallet`, `vintage camera`, `asmr`).
 5. (Optional) Adjust **Mining Options** in the accordion (speed delay, prefix/suffix, 0–9 digits).
 6. Click **Mine Now** (or press Enter).
