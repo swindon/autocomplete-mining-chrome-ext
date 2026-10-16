@@ -173,9 +173,9 @@ function setupEventListeners() {
     toggleAiMenu();
   });
 
-  aiServiceSelect.addEventListener("change", () => {
-    selectAiService(aiServiceSelect.value);
-  });
+  // aiServiceSelect.addEventListener("change", () => {
+  //   selectAiService(aiServiceSelect.value);
+  // });
 
   btnCopyAiPrompt.addEventListener("click", copyAiPromptToClipboard);
 
